@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Chart demonstration</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+</head>
+<body>
+    <script>
+
+        fetch('http://localhost:3000/matchesWonPerYear')
+        .then((response) => {
+            console.log(response);
+            return response.json();
+        })
+        .then((data) => {
+            function getData() {
+                let dataObj = {};
+                for (let obj in data) {
+                    dataObj[obj] = [];        
+                }
+                return dataObj;
+            }
+            function getArrayList(dataObj) {
+                for (const key in data) {
+                    for (const key2 in data[key]) {
+                        dataObj[key].push(data[key][key2]);
+                    }
+                }
+                return dataObj;
+            }   
+            const dataObj = getData();
+            const dataArr1 = getArrayList(dataObj);
+            const dataArr = Object.entries(dataArr1);
+            Highcharts.chart('container1', {
+                title: {
+                    text: 'Total number of matches won Per year per team'
+                },
+                chart: {
+                    type: 'column'
+                },
+                subtitle: {
+                    text: 'Source: kagle.com'
+                },
+            
+                yAxis: {
+                    title: {
+                        text: 'Number of matches'
+                    }
+                },
+            
+                xAxis: {
+                    title: 'Years',
+                    categories: [2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017]
+                },
+            
+                legend: {
+                    layout: 'vertical',
+                    align: 'right',
+                    verticalAlign: 'middle'
+                },
+            
+                plotOptions: {
+                    series: {
+                        label: {
+                            connectorAllowed: false
+                        }
+                    }
+                },
+            
+                series: [{
+                    name: dataArr[0][0],
+                    data: dataArr[0][1]
+                },
+                {
+                    name: dataArr[1][0],
+                    data: dataArr[1][1]
+                },
+                {
+                    name: dataArr[2][0],
+                    data: dataArr[2][1]
+                },
+                {
+                    name: dataArr[3][0],
+                    data: dataArr[3][1]
+                },
+                {
+                    name: dataArr[4][0],
+                    data: dataArr[4][1]
+                },
+                {
+                    name: dataArr[5][0],
+                    data: dataArr[5][1]
+                },
+                {
+                    name: dataArr[6][0],
+                    data: dataArr[6][1]
+                },
+                {
+                    name: dataArr[7][0],
+                    data: dataArr[7][1]
+                },
+                {
+                    name: dataArr[8][0],
+                    data: dataArr[8][1]
+                },
+                {
+                    name: dataArr[9][0],
+                    data: dataArr[9][1]
+                },
+                {
+                    name: dataArr[10][0],
+                    data: dataArr[10][1]
+                },
+                {
+                    name: dataArr[11][0],
+                    data: dataArr[11][1]
+                },
+                {
+                    name: dataArr[12][0],
+                    data: dataArr[12][1]
+                },
+                {
+                    name: dataArr[13][0],
+                    data: dataArr[13][1]
+                }
+                ],
+            
+                responsive: {
+                    rules: [{
+                        condition: {
+                            maxWidth: 500
+                        },
+                        chartOptions: {
+                            legend: {
+                                layout: 'horizontal',
+                                align: 'center',
+                                verticalAlign: 'bottom'
+                            }
+                        }
+                    }]
+                }
+            
+            });
+        });
+
+    </script>
+    <figure class="highcharts-figure">
+        <div id="container1"></div>
+    </figure>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>High Chart demonstration</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+</head>
+<body>
+    <script>
+        fetch('http://localhost:3000/economicBowler')
+        .then((response) => {
+        return response.json();
+        })
+        .then((data) => {
+
+        function findEcoBowlerObject(data) {
+            const dataObj = data.reduce((result, obj) => {
+                let key = Object.keys(obj);
+                let vals = Object.values(obj);
+                result[key[0]] = vals[0];
+                return result;
+            }, {})
+            return dataObj;
+        }
+        let ecoData = findEcoBowlerObject(data);
+        Highcharts.chart('container3', {
+            title: {
+                text: 'List of economic bowler'
+            },
+        
+            subtitle: {
+                text: 'Source: kagle.com'
+            },
+        
+            yAxis: {
+                title: {
+                    text: 'Economic Rate'
+                }
+            },
+        
+            xAxis: {
+                title: 'Bowlers name',
+                categories: Object.keys(ecoData)
+            },
+        
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle'
+            },
+        
+            plotOptions: {
+                series: {
+                    label: {
+                        connectorAllowed: false
+                    }
+                }
+            },
+        
+            series: [{
+                name: 'Economic bowlers',
+                data: Object.values(ecoData)
+            }],
+        
+            responsive: {
+                rules: [{
+                    condition: {
+                        maxWidth: 500
+                    },
+                    chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                    }
+                }]
+            }
+        
+        });
+        });
+    </script>
+    <figure class="highcharts-figure">
+        <div id="container3"></div>
+    </figure>
+
+</body>
+</html>
