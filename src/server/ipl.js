@@ -1,141 +1,84 @@
-// all logics and function will reside here
-const fs = require('fs')
-const numberOfMatchesPerYear = function(matchesJson) {
-    const matchesPerYearObj = matchesJson.reduce((matchesPerYear, matchesCurrObject) => {
-        if (matchesPerYear[matchesCurrObject.season]) {
-            matchesPerYear[matchesCurrObject.season] = matchesPerYear[matchesCurrObject.season] + 1;
-        } else {
-            matchesPerYear[matchesCurrObject.season] = 1; 
-        }
-        return matchesPerYear
-    }, {}); 
-    return matchesPerYearObj;
-};
+const fs = require('fs');
+const {Pool, Client} = require('pg');
+const filePath = '../output/'
+const client = new Client({
+    user: 'postgres',
+    host: 'localhost',
+    database: 'ipl_data',
+    password: 'postgres',
+    port: 5432,
+});
+client.connect();
 
-const matchesWonPerYear = function(matchesJson) {
-    const matchesWon = matchesJson.reduce((emptyObj, matchesCurrObject) => {
-        if (!emptyObj[matchesCurrObject.season]) {
-            emptyObj[matchesCurrObject.season] = {}; 
-        }
+function numberOfMatchesPerYear() {
+return client.query('SELECT season, count(season) from matches group by season order by season')
+  .then( res => {
+      const matchesPlayed = res.rows.reduce((emptyObj, currObj) => {
+        emptyObj[currObj.season] = parseInt(currObj.count);
         return emptyObj;
-    }, {});
-    return matchesWon;
+      }, {})
+      return matchesPlayed;
+  })
+  .catch(err => {
+    console.log(err);
+  });
 }
-const findMatchesWon = function(matchesJson, matchesWonObj) {
-    matchesJson.forEach(selectedObj => {
-        if(matchesWonObj[selectedObj.season][selectedObj.winner]) {
-            matchesWonObj[selectedObj.season][selectedObj.winner] += 1;
-        } else {
-            matchesWonObj[selectedObj.season][selectedObj.winner] = 1;
-        }
-    });
-    return matchesWonObj
-}
-const tempMatchesWon = function(matchesJson) {
-    const matchesWon = matchesJson.reduce((emptyObj, matchesCurrObject) => {
-        if (!emptyObj[matchesCurrObject.winner]) {
-            emptyObj[matchesCurrObject.winner] = {};
-            for(let i = 2008; i <= 2017; i++) {
-                emptyObj[matchesCurrObject.winner][i] = 0;
-            } 
-        }
-        return emptyObj;
-    }, {});
-    delete matchesWon[''];
 
-    return matchesWon;
-}
-const tempFindMatchesWon = function(matchesJson, matchesWonObj) {
-    matchesJson.forEach(selectedObj => {
-        if (matchesWonObj[selectedObj.winner] !== undefined) {
-            if(matchesWonObj[selectedObj.winner][selectedObj.season] > 0) {
-                matchesWonObj[selectedObj.winner][selectedObj.season] += 1;
-            } else {
-                matchesWonObj[selectedObj.winner][selectedObj.season] = 1;
+function matchesWonPerYear() {
+    return client.query('select winner, season, count(season) from matches group by season, winner')
+    .then( res => {
+
+        const matchesWon = res.rows.reduce((emptyObj, currObj) => {
+            if(emptyObj[currObj.winner]) {
+                emptyObj[currObj.winner][currObj.season] = parseInt([currObj.count]);
+            } else if(currObj.winner !== null) {
+                emptyObj[currObj.winner] = {};
+                for(let i = 2008; i < 2018; i++) {
+                    emptyObj[currObj.winner][i] = 0;
+                }
+                emptyObj[currObj.winner][currObj.season] = parseInt([currObj.count]);
             }
-        }
-    });
-    return matchesWonObj
-}
-const selectIdFromMatch = function(matchJson, year) {
-    const matchIdArray = matchJson.filter((currentMatchObj) => {
-        return currentMatchObj.season == year;
-    });
-    const matchIdObject = matchIdArray.reduce((emptyObj, selectedMatchObj) => {
-        if(!emptyObj[selectedMatchObj.id]){
-            emptyObj[selectedMatchObj.id] = selectedMatchObj.id;
-        }
-        return emptyObj;
-    }, {});
-    return matchIdObject;
-}
-const findExtraRuns = function(selectedIdObject, deleveriesJson) {
-    const totalExtraRuns = deleveriesJson.reduce((emptyObj, currentDeliveryObj) => {
-        if(selectedIdObject[currentDeliveryObj.match_id]) {
-            return computeExtraRunPerTeam(emptyObj, currentDeliveryObj);
-        }
-        return emptyObj;
-    }, {});
-    return totalExtraRuns;
-}
-const computeExtraRunPerTeam = function(emptyObj, deliveriesObj) {
-    if(emptyObj[deliveriesObj.bowling_team]) {
-        emptyObj[deliveriesObj.bowling_team] += parseInt(deliveriesObj.extra_runs);
-    } else {
-        emptyObj[deliveriesObj.bowling_team] = parseInt(deliveriesObj.extra_runs);
-    }
-    return emptyObj;
-}
-const findBowlerObject = function(selectedBowlerId, deleiveryJsonData) {
-    const ecoBowlerArray = deleiveryJsonData.reduce((emptyArray, deliveriesObj) => {
-        if(selectedBowlerId[deliveriesObj.match_id]) {
-            emptyArray.push(deliveriesObj);
-        }
-        return emptyArray;
-     }, []);
-    return ecoBowlerArray;
-};
-const findEcoBowler = function(ecoBowlerObjArray) {
-    const ecoBowler = ecoBowlerObjArray.reduce((emptyBowlerObject, currentObj) => {
-        if (!emptyBowlerObject[currentObj.bowler]) {
-            emptyBowlerObject[currentObj.bowler] = {};
-        }
-        return emptyBowlerObject;
-    }, {});
-    return ecoBowler;
-}
-const findRunsAndBalls = function(bowlerScoreObj, ecoBowlerObject) {
-    const result = ecoBowlerObject.reduce((unUsedValue, currObj) => {
-        let totalRun = (parseInt(currObj.batsman_runs) + parseInt(currObj.wide_runs) + parseInt(currObj.noball_runs) + parseInt(currObj.penalty_runs));
-        if(bowlerScoreObj[currObj.bowler]['ball']) {
-            bowlerScoreObj[currObj.bowler]['ball'] += 1 - (currObj.noball_runs || currObj.wide_runs);
-            bowlerScoreObj[currObj.bowler]['total_runs'] += totalRun;
-        } else {
-            bowlerScoreObj[currObj.bowler]['ball'] = 1;
-            bowlerScoreObj[currObj.bowler]['total_runs'] = totalRun;   
-        }
-    });
-    let bowlerArr = Object.keys(bowlerScoreObj);
-    return findEconomy(bowlerArr, bowlerScoreObj);
-}
-function findEconomy(bowlerArr, bowlerScoreObj) {
-    // let economyBowlerArr = [];
-    const economyBowlerArr = bowlerArr.reduce((economyBowler, elementObj) => {
-        let economyBowlerObj = {};
-        let over = (bowlerScoreObj[elementObj]['ball'])/6;
-        let ecoBowl = (bowlerScoreObj[elementObj]['total_runs']) / over;
-        ecoBowl = Number.parseFloat(""+ecoBowl).toFixed(2);
-        economyBowlerObj[elementObj] = parseFloat(ecoBowl);
-        economyBowler.push(economyBowlerObj);
-        return economyBowler;
-    }, []);
-    return economyBowlerArr;
+            return emptyObj;
+        }, {})
+        return matchesWon;
+    })
+    .catch( err => { console.log(err)});
 }
 
-function findEco(economyData) {
-    economyData.sort((a,b) => Object.values(a) - Object.values(b));
-    economyData.splice(10, (economyData.length - 10));
-    return economyData;
+function findExtraRuns() {
+    return client.query(`select bowling_team, sum(extra_runs) from deliveries where match_id in 
+    (select id from matches where season = 2016) group by bowling_team`)
+    .then( res => {
+        const extraruns = res.rows.reduce((emptyObj, currObj) => {
+            if(!emptyObj[currObj.bowling_team]) {
+                emptyObj[currObj.bowling_team] = parseInt([currObj.sum]);
+            }
+            return emptyObj;
+        }, {})
+        return extraruns;
+    })
+    .catch( err => { console.log(err)});
+}
+function findEconomyBowler() {
+    return client.query(`select bowler_name, sum(batsman_runs + wide_runs + noball_runs + penalty_runs), count(ball - (wide_runs + noball_runs)) 
+    from deliveries where match_id in (select id from matches where season = 2015) group by bowler_name`)
+    .then( res => {
+        const ecoBowlerObject = res.rows.reduce((ecoBowlerArray, currObj) => {
+            let emptyObj = {};
+            if(!emptyObj[currObj.bowler_name]) {
+                emptyObj[currObj.bowler_name] = parseFloat((currObj.sum / (currObj.count/6)).toFixed(2));
+                ecoBowlerArray.push(emptyObj);
+            }
+            return ecoBowlerArray;
+        }, [])
+        return sortEconomyBowler(ecoBowlerObject);
+    })
+    .catch( err => { console.log(err)});
+}
+function sortEconomyBowler(ecoBowlerArray) {
+    ecoBowlerArray.sort((a, b) => Object.values(a) - Object.values(b));
+    ecoBowlerArray.splice(10, (ecoBowlerArray.length -10))
+    return ecoBowlerArray;
 }
 const writeToFile = function(filePath, jsonObject) {
     let data = JSON.stringify(jsonObject);
@@ -147,18 +90,13 @@ const writeToFile = function(filePath, jsonObject) {
         }
     });
 }
+const closeConnection = () => client.end();
 
 module.exports = {
     numberOfMatchesPerYear,
     matchesWonPerYear,
-    tempMatchesWon,
-    findMatchesWon,
-    tempFindMatchesWon,
-    selectIdFromMatch,
     findExtraRuns,
-    findEcoBowler,
-    findBowlerObject,
-    findRunsAndBalls,
-    findEco,
+    findEconomyBowler,
+    closeConnection,
     writeToFile
 };
