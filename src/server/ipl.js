@@ -7,6 +7,7 @@ const client = new Client({
     database: 'ipl_data',
     password: 'postgres',
     port: 5432,
+    max: 20
 });
 client.connect();
 

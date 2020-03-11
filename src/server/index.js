@@ -10,9 +10,12 @@ async function matches() {
         IPLfunc.writeToFile('extraRunsperTeam.json', extraRuns);
         let ecoBowler = await IPLfunc.findEconomyBowler();
         IPLfunc.writeToFile('economicBowler.json', ecoBowler);
-        IPLfunc.closeConnection();
-        } catch (error) {
+        
+    } catch (error) {
         console.log(error);
+    }
+    finally {
+        IPLfunc.closeConnection();
     }
 }
 matches();
