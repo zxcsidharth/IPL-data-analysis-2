@@ -11,27 +11,7 @@ const numberOfMatchesPerYear = function(matchesJson) {
     }, {}); 
     return matchesPerYearObj;
 };
-
 const matchesWonPerYear = function(matchesJson) {
-    const matchesWon = matchesJson.reduce((emptyObj, matchesCurrObject) => {
-        if (!emptyObj[matchesCurrObject.season]) {
-            emptyObj[matchesCurrObject.season] = {}; 
-        }
-        return emptyObj;
-    }, {});
-    return matchesWon;
-}
-const findMatchesWon = function(matchesJson, matchesWonObj) {
-    matchesJson.forEach(selectedObj => {
-        if(matchesWonObj[selectedObj.season][selectedObj.winner]) {
-            matchesWonObj[selectedObj.season][selectedObj.winner] += 1;
-        } else {
-            matchesWonObj[selectedObj.season][selectedObj.winner] = 1;
-        }
-    });
-    return matchesWonObj
-}
-const tempMatchesWon = function(matchesJson) {
     const matchesWon = matchesJson.reduce((emptyObj, matchesCurrObject) => {
         if (!emptyObj[matchesCurrObject.winner]) {
             emptyObj[matchesCurrObject.winner] = {};
@@ -45,7 +25,7 @@ const tempMatchesWon = function(matchesJson) {
 
     return matchesWon;
 }
-const tempFindMatchesWon = function(matchesJson, matchesWonObj) {
+const findMatchesWon = function(matchesJson, matchesWonObj) {
     matchesJson.forEach(selectedObj => {
         if (matchesWonObj[selectedObj.winner] !== undefined) {
             if(matchesWonObj[selectedObj.winner][selectedObj.season] > 0) {
@@ -151,9 +131,7 @@ const writeToFile = function(filePath, jsonObject) {
 module.exports = {
     numberOfMatchesPerYear,
     matchesWonPerYear,
-    tempMatchesWon,
     findMatchesWon,
-    tempFindMatchesWon,
     selectIdFromMatch,
     findExtraRuns,
     findEcoBowler,
